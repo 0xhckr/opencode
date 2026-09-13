@@ -37,13 +37,21 @@ export function SessionWorkspaceMenu(props: {
     props.onOpenChange?.(open)
     if (!open) return
     const sdk = serverSDK
+    const list = () =>
+      sdk.api.worktree
+        .list({ projectID: props.project.id })
+        .then((items) =>
+          setDirectories(
+            items
+              .map((item) => item.directory)
+              .filter((directory) => !sameDirectory(props.project.worktree, directory)),
+          ),
+        )
+        .catch(() => undefined)
+    void list()
     void sdk.api.worktree
-      .list({ location: { directory: props.directory } })
-      .then((items) =>
-        setDirectories(
-          items.map((item) => item.directory).filter((directory) => !sameDirectory(props.project.worktree, directory)),
-        ),
-      )
+      .refresh({ projectID: props.project.id })
+      .then(list)
       .catch(() => undefined)
   }
   const move = async (selection: "create" | string) => {

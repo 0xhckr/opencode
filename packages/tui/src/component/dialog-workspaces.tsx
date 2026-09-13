@@ -47,10 +47,6 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
   const paths = useTuiPaths()
   const shortcuts = Keymap.useShortcuts()
   const location = createMemo(() => sessionData.location.info(props.location))
-  const worktreeLocation = () => ({
-    directory: props.location?.directory ?? location()?.directory ?? paths.cwd,
-    workspace: props.location?.workspaceID ?? location()?.workspaceID,
-  })
   const [working, setWorking] = createSignal(Boolean(props.initialRemoving))
   const [toDelete, setToDelete] = createSignal<string>()
   const [removing, setRemoving] = createSignal(props.initialRemoving)
@@ -81,10 +77,10 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
   })
 
   const [directories, { refetch }] = createResource(
-    () => (props.fixture || props.initialRemoving ? undefined : worktreeLocation()),
-    async (location, info): Promise<ReadonlyArray<ProjectDirectory> | undefined> => {
+    () => (props.fixture || props.initialRemoving ? undefined : props.projectID),
+    async (projectID, info): Promise<ReadonlyArray<ProjectDirectory> | undefined> => {
       try {
-        const directories = await client.api.worktree.list({ location })
+        const directories = await client.api.worktree.list({ projectID })
         setLoadError(undefined)
         return directories
       } catch (error) {
@@ -96,7 +92,14 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
       }
     },
   )
-  const directoryData = createMemo(() => directories() ?? props.initialDirectories)
+  onMount(() => {
+    if (props.fixture || props.initialRemoving) return
+    void discover().catch(() => undefined)
+  })
+  function discover() {
+    return client.api.worktree.refresh({ projectID: props.projectID }).then(() => refetch())
+  }
+  const directoryData = createMemo(() => directories.latest ?? props.initialDirectories)
   // Show the locked error view only when we have nothing to display. A refresh
   // that fails after the list rendered keeps the list and its actions.
   const showError = createMemo(() => Boolean(loadError()) && !directoryData())
@@ -229,7 +232,7 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
     setWorking(true)
     const request = {
       directory: selected.directory,
-      location: worktreeLocation(),
+      projectID: props.projectID,
     }
     const error = await client.api.worktree
       .remove({
@@ -385,7 +388,7 @@ export function DialogWorkspaces(props: DialogWorkspacesProps) {
                   command: "dialog.move_session.refresh",
                   title: "refresh",
                   selection: "none",
-                  onTrigger: () => void refetch(),
+                  onTrigger: () => void discover().catch(toast.error),
                 },
               ]
         }

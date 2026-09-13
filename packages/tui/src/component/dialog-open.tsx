@@ -1,4 +1,4 @@
-import { batch, createMemo, createResource, createSignal, onCleanup, Show } from "solid-js"
+import { batch, createEffect, createMemo, createResource, createSignal, onCleanup, Show } from "solid-js"
 import type { OpenCodeEvent, SessionInfo } from "@opencode/client"
 import path from "path"
 import { useTerminalDimensions } from "@opentui/solid"
@@ -124,21 +124,21 @@ export function DialogOpen(props: { sessions: SessionInfo[]; onLoad: (sessions: 
     const current = view()
     return current.type === "worktrees" ? current.workspaceID : undefined
   }
-  const [worktrees] = createResource(
-    () => (view().type === "worktrees" ? view() : undefined),
-    () =>
-      client.api.worktree
-        .list({
-          location: {
-            directory: data.project.get(projectID()!)!.canonical,
-            workspace: workspaceID(),
-          },
-        })
-        .catch((error: unknown) => {
-          toast.show({ title: "Loading worktrees failed", message: errorMessage(error), variant: "error" })
-          return []
-        }),
+  const [worktrees, worktreeActions] = createResource(projectID, (projectID) =>
+    client.api.worktree.list({ projectID }).catch((error: unknown) => {
+      toast.show({ title: "Loading worktrees failed", message: errorMessage(error), variant: "error" })
+      return []
+    }),
   )
+
+  createEffect(() => {
+    const id = projectID()
+    if (!id) return
+    void client.api.worktree
+      .refresh({ projectID: id })
+      .then(() => worktreeActions.refetch())
+      .catch(() => undefined)
+  })
 
   const [matched] = createResource(
     () => {
@@ -454,17 +454,13 @@ export function DialogOpen(props: { sessions: SessionInfo[]; onLoad: (sessions: 
             setCreating(true)
             void client.api.worktree
               .create({
-                location: {
-                  directory: data.project.get(id)!.canonical,
-                  workspace: workspaceID(),
-                },
+                projectID: id,
                 ...(value.trim() ? { name: value.trim() } : {}),
               })
               .then((created) => {
                 if (closed || creation() !== previous) return
                 const target = {
                   directory: created.directory,
-                  ...(workspaceID() ? { workspaceID: workspaceID() } : {}),
                 }
                 dialog.clear()
                 route.navigate({ type: "home", location: target })

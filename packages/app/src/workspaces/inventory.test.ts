@@ -7,6 +7,8 @@ import { normalizeProjectInfo, updateProjectInfo } from "@/runtime/server/global
 
 function setup(list: (directory: string) => Promise<WorktreeDirectory[]>) {
   const client = new QueryClient()
+  const discovery = Promise.withResolvers<void>()
+  const discoveries: string[] = []
   const calls: string[] = []
   const updates: Array<[string, WorktreeDirectory[]]> = []
   const inventory = createWorktreeInventory({
@@ -14,14 +16,20 @@ function setup(list: (directory: string) => Promise<WorktreeDirectory[]>) {
     queryClient: client,
     api: () => ({
       list: (input) => {
-        const directory = input!.location!.directory!
+        const directory = input.projectID
         calls.push(directory)
         return list(directory)
       },
+      refresh: (input) => {
+        discoveries.push(input.projectID)
+        return discovery.promise
+      },
     }),
-    updated: (directory, items) => updates.push([directory, items]),
+    updated: (directory, items) => {
+      updates.push([directory, items])
+    },
   })
-  return { client, calls, updates, inventory }
+  return { client, calls, updates, inventory, discovery, discoveries }
 }
 
 describe("createWorktreeInventory", () => {
@@ -32,7 +40,7 @@ describe("createWorktreeInventory", () => {
       return [{ directory }, { directory: `${directory}/feature`, strategy: "git" }]
     })
     const first = setupResult.inventory.load("/repo")
-    const second = setupResult.inventory.load("/repo/")
+    const second = setupResult.inventory.load("/repo")
     expect(setupResult.calls).toEqual(["/repo"])
     gate.resolve()
     expect(await first).toHaveLength(2)
@@ -42,7 +50,8 @@ describe("createWorktreeInventory", () => {
     expect(setupResult.updates).toEqual([
       ["/repo", [{ directory: "/repo" }, { directory: "/repo/feature", strategy: "git" }]],
     ])
-    expect(setupResult.inventory.cached("/repo/")).toHaveLength(2)
+    expect(setupResult.inventory.cached("/repo")).toHaveLength(2)
+    expect(setupResult.discoveries).toEqual(["/repo"])
     setupResult.client.clear()
   })
 
@@ -70,12 +79,24 @@ describe("createWorktreeInventory", () => {
     setupResult.client.clear()
   })
 
-  test("keys are partitioned by server and normalized by path", () => {
+  test("keys are partitioned by server and use opaque project IDs", () => {
     const remote = "https://remote.example" as typeof ServerScope.local
-    expect(worktreeInventoryKey(ServerScope.local, "C:\\Repo\\")).toEqual(
-      worktreeInventoryKey(ServerScope.local, "C:/Repo"),
+    expect(worktreeInventoryKey(ServerScope.local, "project")).not.toEqual(
+      worktreeInventoryKey(ServerScope.local, "project/"),
     )
     expect(worktreeInventoryKey(ServerScope.local, "/repo")).not.toEqual(worktreeInventoryKey(remote, "/repo"))
+  })
+
+  test("shows saved inventory during discovery and re-reads it on an inventory event", async () => {
+    const rows = [{ directory: "/repo" }]
+    const result = setup(async () => [...rows])
+    expect(await result.inventory.load("project")).toEqual(rows)
+    rows.push({ directory: "/external" })
+    result.discovery.resolve()
+    expect(await result.inventory.refresh("project")).toEqual(rows)
+    expect(result.calls).toEqual(["project", "project"])
+    expect(result.discoveries).toEqual(["project"])
+    result.client.clear()
   })
 })
 

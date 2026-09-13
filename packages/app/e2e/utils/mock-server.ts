@@ -285,12 +285,6 @@ function mockHandlers(config: MockServerConfig, state: { cursors: Map<string, st
             canonical: project.canonical ?? config.directory,
           })
         },
-        projectCurrent: () =>
-          Effect.succeed({
-            id: (config.project as { id?: string }).id,
-            directory: config.directory,
-            canonical: config.directory,
-          }),
         configPreferences: () => Effect.succeed(preferences.current),
         configUpdatePreferences: (ctx) =>
           Effect.sync(() => {
@@ -308,7 +302,7 @@ function mockHandlers(config: MockServerConfig, state: { cursors: Map<string, st
             })),
           ]),
         worktreeCreate: (ctx) => {
-          const input = record(ctx.payload) ? ctx.payload : {}
+          const input = ctx.payload
           return Effect.succeed({
             directory: `${typeof input.directory === "string" ? input.directory : config.directory}/${
               typeof input.name === "string" ? input.name : "copy"

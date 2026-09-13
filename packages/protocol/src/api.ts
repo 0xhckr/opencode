@@ -54,7 +54,6 @@ type LocationGroups<LocationId extends HttpApiMiddleware.AnyId> =
   | HttpApiGroup.AddMiddleware<typeof PtyGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof ShellGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof ReferenceGroup, LocationId>
-  | HttpApiGroup.AddMiddleware<typeof WorktreeGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof VcsGroup, LocationId>
   | HttpApiGroup.AddMiddleware<typeof ConfigGroup, LocationId>
 
@@ -90,6 +89,7 @@ type ApiGroups<
   | typeof DebugGroup
   | typeof MigrationGroup
   | typeof WorkspaceGroup
+  | typeof WorktreeGroup
   | typeof GenerateGroup
   | typeof PersistentPtyGroup
   | LocationGroups<LocationId>
@@ -176,7 +176,7 @@ const makeApiFromGroup = <
     .add(PersistentPtyGroup)
     .add(ShellGroup.middleware(locationMiddleware))
     .add(ReferenceGroup.middleware(locationMiddleware))
-    .add(WorktreeGroup.middleware(locationMiddleware))
+    .add(WorktreeGroup)
     .add(WorkspaceGroup)
     .add(VcsGroup.middleware(locationMiddleware))
     .add(DebugGroup)

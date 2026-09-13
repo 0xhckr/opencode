@@ -54,7 +54,7 @@ test("exposes every standard HTTP API group", () => {
   expect(Object.keys(client.experimental)).toEqual(["persistentPty"])
   expect(client.experimental.persistentPty.read).toBeFunction()
   expect(Object.keys(client.shell)).toEqual(["list", "create", "get", "timeout", "output", "remove"])
-  expect(Object.keys(client.project)).toEqual(["list", "update", "current"])
+  expect(Object.keys(client.project)).toEqual(["list", "update"])
   expect(Object.keys(client.worktree)).toEqual(["list", "create", "remove", "refresh"])
 })
 
@@ -336,7 +336,7 @@ test("file.read returns binary content from the public HTTP contract", async () 
   )
 })
 
-test("all worktree operations use location-based routes without a project parameter", async () => {
+test("all worktree operations require a project ID", async () => {
   const requests: Request[] = []
   const client = OpenCode.make({
     baseUrl: "http://localhost:3000",
@@ -350,38 +350,41 @@ test("all worktree operations use location-based routes without a project parame
     },
   })
 
-  expect(await client.worktree.list()).toEqual([{ directory: "/tmp/project" }])
+  expect(await client.worktree.list({ projectID: "project" })).toEqual([{ directory: "/tmp/project" }])
   expect(
     await client.worktree.create({
-      strategy: "git",
+      projectID: "project",
       directory: "/tmp/worktrees",
       name: "api",
     }),
   ).toEqual({ directory: "/tmp/worktrees/api" })
   await client.worktree.remove({
+    projectID: "project",
     directory: "/tmp/worktrees/api",
     force: false,
   })
-  await client.worktree.refresh()
+  await client.worktree.refresh({ projectID: "project" })
 
   expect(requests.map((request) => [request.method, request.url])).toEqual([
-    ["GET", "http://localhost:3000/api/worktree"],
+    ["GET", "http://localhost:3000/api/worktree?projectID=project"],
     ["POST", "http://localhost:3000/api/worktree"],
     ["DELETE", "http://localhost:3000/api/worktree"],
     ["POST", "http://localhost:3000/api/worktree/refresh"],
   ])
   expect(await requests[1]?.json()).toEqual({
-    strategy: "git",
+    projectID: "project",
     directory: "/tmp/worktrees",
     name: "api",
   })
-  expect(await requests[2]?.json()).toEqual({ directory: "/tmp/worktrees/api", force: false })
+  expect(await requests[2]?.json()).toEqual({ projectID: "project", directory: "/tmp/worktrees/api", force: false })
+  expect(await requests[3]?.json()).toEqual({ projectID: "project" })
 })
 
-test("worktree operations send the configuration location separately from their payload", async () => {
+test("worktree operations use the explicit project even with default location headers", async () => {
   const requests: Request[] = []
   const client = OpenCode.make({
     baseUrl: "http://localhost:3000",
+    headers: { "x-opencode-directory": "/unrelated" },
     fetch: async (input, init) => {
       const request = new Request(input, init)
       requests.push(request)
@@ -391,24 +394,24 @@ test("worktree operations send the configuration location separately from their 
       return Response.json({ directory: "/configured/task" })
     },
   })
-  expect(await client.worktree.create({ location: { directory: "/repo/nested" }, name: "task" })).toEqual({
+  expect(await client.worktree.create({ projectID: "project", name: "task" })).toEqual({
     directory: "/configured/task",
   })
-  expect(requests[0]?.url).toBe("http://localhost:3000/api/worktree?location%5Bdirectory%5D=%2Frepo%2Fnested")
-  expect(await requests[0]?.json()).toEqual({ name: "task" })
+  expect(requests[0]?.url).toBe("http://localhost:3000/api/worktree")
+  expect(await requests[0]?.json()).toEqual({ projectID: "project", name: "task" })
   await client.worktree.remove({
-    location: { directory: "/repo/nested" },
+    projectID: "project",
     directory: "/configured/task",
     force: true,
   })
-  await client.worktree.refresh({ location: { directory: "/repo/nested" } })
-  expect(requests[1]?.url).toBe("http://localhost:3000/api/worktree?location%5Bdirectory%5D=%2Frepo%2Fnested")
-  expect(await requests[1]?.json()).toEqual({ directory: "/configured/task", force: true })
-  expect(requests[2]?.url).toBe("http://localhost:3000/api/worktree/refresh?location%5Bdirectory%5D=%2Frepo%2Fnested")
-  expect(await client.worktree.list({ location: { directory: "/repo/nested" } })).toEqual([
+  await client.worktree.refresh({ projectID: "project" })
+  expect(requests[1]?.url).toBe("http://localhost:3000/api/worktree")
+  expect(await requests[1]?.json()).toEqual({ projectID: "project", directory: "/configured/task", force: true })
+  expect(requests[2]?.url).toBe("http://localhost:3000/api/worktree/refresh")
+  expect(await client.worktree.list({ projectID: "project" })).toEqual([
     { directory: "/configured/task", strategy: "git" },
   ])
-  expect(requests[3]?.url).toBe("http://localhost:3000/api/worktree?location%5Bdirectory%5D=%2Frepo%2Fnested")
+  expect(requests[3]?.url).toBe("http://localhost:3000/api/worktree?projectID=project")
 })
 
 test("workspace.destroy returns the transition result", async () => {

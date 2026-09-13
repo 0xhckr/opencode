@@ -236,7 +236,7 @@ test("workspaces opens without waiting for inventory or sessions", async ({ page
   const requested = page.waitForRequest(
     (request) =>
       new URL(request.url()).pathname === "/api/worktree" &&
-      new URL(request.url()).searchParams.get("location[directory]") === directory &&
+      new URL(request.url()).searchParams.get("projectID") === "proj_settings_demo" &&
       request.method() === "GET",
   )
   await settings.getByRole("tab", { name: "Worktrees", exact: true }).click()
@@ -265,7 +265,7 @@ test("workspaces opens without waiting for inventory or sessions", async ({ page
   refresh.resolve()
 })
 
-test("worktree deletion sends the project location separately from the target", async ({ page }) => {
+test("worktree deletion sends the project ID and target without a location", async ({ page }) => {
   const removed = new Set<string>()
   await page.route(
     (url) => url.pathname === "/api/worktree",
@@ -297,8 +297,8 @@ test("worktree deletion sends the project location separately from the target", 
   )
   await remove.click()
   const request = await deleting
-  expect(new URL(request.url()).searchParams.get("location[directory]")).toBe(directory)
-  expect(request.postDataJSON()).toEqual({ directory: sandboxes[0], force: true })
+  expect(new URL(request.url()).searchParams.has("location[directory]")).toBe(false)
+  expect(request.postDataJSON()).toEqual({ projectID: "proj_settings_demo", directory: sandboxes[0], force: true })
   await expect(settings.getByText(sandboxes[0], { exact: true })).toHaveCount(0)
   await expect(settings.getByText("11 worktrees", { exact: true })).toBeVisible()
 })

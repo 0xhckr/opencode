@@ -54,7 +54,7 @@ for (const interaction of ["hover", "focus"] as const) {
     await page.route(
       (url) => url.pathname === "/api/worktree",
       async (route) => {
-        calls.push(new URL(route.request().url()).searchParams.get("location[directory]") ?? "")
+        calls.push(new URL(route.request().url()).searchParams.get("projectID") ?? "")
         await inventory.promise
         await route.fallback()
       },
@@ -74,7 +74,7 @@ for (const interaction of ["hover", "focus"] as const) {
     await worktrees[interaction]()
     await requested
     await expect(worktrees).toHaveAttribute("aria-selected", "false")
-    await expect.poll(() => calls).toEqual([directory])
+    await expect.poll(() => calls).toEqual([project.id])
     expect(sessions).toEqual([])
 
     if (interaction === "hover") {
@@ -90,7 +90,7 @@ for (const interaction of ["hover", "focus"] as const) {
     inventory.resolve()
     await expect(settings.getByText("2 worktrees", { exact: true })).toBeVisible()
     await expect(settings.getByText("Cached worktree session", { exact: true })).toBeVisible()
-    expect(calls).toEqual([directory])
+    expect(calls).toEqual([project.id])
     await expect.poll(() => sessions.toSorted()).toEqual(sandboxes.toSorted())
   })
 }
@@ -124,9 +124,9 @@ for (const nested of [false, true]) {
     await page.route(
       (url) => url.pathname === "/api/worktree",
       async (route) => {
-        const requested = new URL(route.request().url()).searchParams.get("location[directory]") ?? ""
+        const requested = new URL(route.request().url()).searchParams.get("projectID") ?? ""
         calls.worktrees.push(requested)
-        if (requested === other.canonical) return route.fulfill({ json: [{ directory: other.canonical }] })
+        if (requested === other.id) return route.fulfill({ json: [{ directory: other.canonical }] })
         await route.fallback()
       },
     )
@@ -146,7 +146,7 @@ for (const nested of [false, true]) {
     await worktrees.click()
     await expect(settings.getByText("2 worktrees", { exact: true })).toBeVisible()
     expect(calls.projects).toBe(1)
-    expect(calls.worktrees.toSorted()).toEqual([directory, other.canonical].toSorted())
+    expect(calls.worktrees.toSorted()).toEqual([project.id, other.id].toSorted())
   })
 }
 
