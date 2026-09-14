@@ -62,7 +62,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    install -Dm755 dist/cli-*/bin/opencode2 $out/bin/opencode2
+    install -Dm755 dist/cli-*/bin/opencode $out/bin/opencode2
 
     wrapProgram $out/bin/opencode2 \
       --prefix PATH : ${
