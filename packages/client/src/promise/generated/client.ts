@@ -259,10 +259,9 @@ import type {
   WebsearchQueryOutput,
   ConfigGetInput,
   ConfigGetOutput,
-  ConfigPreferencesOutput,
-  ConfigUpdatePreferencesInput,
-  ConfigUpdatePreferencesOutput,
   ConfigShellsOutput,
+  ConfigUpdateInput,
+  ConfigUpdateOutput,
 } from "./types.js"
 import { ClientError } from "./client-error.js"
 
@@ -1101,7 +1100,7 @@ export function make(options: ClientOptions) {
             path: `/api/integration/${encodeURIComponent(input.integrationID)}`,
             query: { location: input["location"] },
             successStatus: 200,
-            declaredStatuses: [400, 401],
+            declaredStatuses: [400, 401, 404],
             empty: false,
           },
           requestOptions,
@@ -2155,32 +2154,21 @@ export function make(options: ClientOptions) {
           },
           requestOptions,
         ),
-      preferences: (requestOptions?: RequestOptions) =>
-        request<ConfigPreferencesOutput>(
-          {
-            method: "GET",
-            path: `/api/config/preferences`,
-            successStatus: 200,
-            declaredStatuses: [400, 401],
-            empty: false,
-          },
-          requestOptions,
-        ),
-      updatePreferences: (input?: ConfigUpdatePreferencesInput, requestOptions?: RequestOptions) =>
-        request<ConfigUpdatePreferencesOutput>(
-          {
-            method: "PATCH",
-            path: `/api/config/preferences`,
-            body: { shell: input?.["shell"], websearch: input?.["websearch"] },
-            successStatus: 200,
-            declaredStatuses: [400, 401],
-            empty: false,
-          },
-          requestOptions,
-        ),
       shells: (requestOptions?: RequestOptions) =>
         request<ConfigShellsOutput>(
           { method: "GET", path: `/api/config/shell`, successStatus: 200, declaredStatuses: [400, 401], empty: false },
+          requestOptions,
+        ),
+      update: (input: ConfigUpdateInput, requestOptions?: RequestOptions) =>
+        request<ConfigUpdateOutput>(
+          {
+            method: "PATCH",
+            path: `/api/experimental/config`,
+            body: { shell: input["shell"] },
+            successStatus: 204,
+            declaredStatuses: [400, 401],
+            empty: true,
+          },
           requestOptions,
         ),
     },

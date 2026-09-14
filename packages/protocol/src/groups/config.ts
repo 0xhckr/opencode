@@ -1,7 +1,7 @@
 import { Config } from "@opencode/schema/config"
 import { ConfigShell } from "@opencode/schema/config/shell"
 import { Schema } from "effect"
-import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/unstable/httpapi"
+import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi"
 import { LocationQuery, locationQueryOpenApi } from "./location.js"
 
 export const ConfigGroup = HttpApiGroup.make("server.config")
@@ -21,29 +21,6 @@ export const ConfigGroup = HttpApiGroup.make("server.config")
       ),
   )
   .add(
-    HttpApiEndpoint.get("config.preferences", "/api/config/preferences", {
-      success: Config.Preferences,
-    }).annotateMerge(
-      OpenApi.annotations({
-        identifier: "config.preferences",
-        summary: "Get global preferences",
-        description: "Return preferences from the highest-precedence global configuration document.",
-      }),
-    ),
-  )
-  .add(
-    HttpApiEndpoint.patch("config.updatePreferences", "/api/config/preferences", {
-      payload: Config.PreferencesPatch,
-      success: Config.Preferences,
-    }).annotateMerge(
-      OpenApi.annotations({
-        identifier: "config.updatePreferences",
-        summary: "Update global preferences",
-        description: "Patch preferences in the highest-precedence global configuration document.",
-      }),
-    ),
-  )
-  .add(
     HttpApiEndpoint.get("config.shells", "/api/config/shell", {
       success: Schema.Array(ConfigShell.Option),
     }).annotateMerge(
@@ -51,6 +28,18 @@ export const ConfigGroup = HttpApiGroup.make("server.config")
         identifier: "config.shells",
         summary: "List available shells",
         description: "Return shells available to terminal and agent execution.",
+      }),
+    ),
+  )
+  .add(
+    HttpApiEndpoint.patch("config.update", "/api/experimental/config", {
+      payload: Config.Patch,
+      success: HttpApiSchema.NoContent,
+    }).annotateMerge(
+      OpenApi.annotations({
+        identifier: "experimental.config.update",
+        summary: "Update global configuration",
+        description: "Patch supported fields in the highest-precedence global configuration document.",
       }),
     ),
   )

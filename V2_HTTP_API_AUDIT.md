@@ -88,19 +88,20 @@ Review endpoints in document order. For each endpoint, select one disposition an
 | [x] 008 | `GET` | `/api/agent` | `agent.list` | Keep | Request and response accepted as-is. |
 | [x] 009 | `GET` | `/api/agent/{agentID}` | `agent.get` | Keep | Request, response, and not-found error accepted as-is. |
 | [x] 010 | `GET` | `/api/plugin` | `plugin.list` | Keep | Request and response accepted as-is. |
-| [ ] 012 | `POST` | `/api/plugin/check` | `plugin.check` |  |  |
-| [ ] 013 | `POST` | `/api/plugin/update` | `plugin.update` |  |  |
-| [ ] 014 | `GET` | `/api/model` | `model.list` |  |  |
-| [ ] 015 | `GET` | `/api/model/default` | `model.default` |  |  |
-| [ ] 016 | `GET` | `/api/provider` | `provider.list` |  |  |
-| [ ] 017 | `GET` | `/api/provider/{providerID}` | `provider.get` |  |  |
-| [ ] 018 | `GET` | `/api/command` | `command.list` |  |  |
-| [ ] 019 | `GET` | `/api/skill` | `skill.list` |  |  |
-| [ ] 020 | `GET` | `/api/reference` | `reference.list` |  |  |
-| [ ] 021 | `GET` | `/api/config` | `config.get` |  |  |
-| [ ] 022 | `GET` | `/api/config/preferences` | `config.preferences` |  |  |
-| [ ] 023 | `PATCH` | `/api/config/preferences` | `config.updatePreferences` |  |  |
+| [x] 012 | `POST` | `/api/plugin/check` | `plugin.check` | Keep | Request and response accepted as-is. |
+| [x] 013 | `POST` | `/api/plugin/update` | `plugin.update` | Keep | Request and errors accepted as-is. |
+| [x] 014 | `GET` | `/api/model` | `model.list` | Keep | Request and response accepted as-is. |
+| [x] 015 | `GET` | `/api/model/default` | `model.default` | Keep | Request and nullable response accepted as-is. |
+| [x] 016 | `GET` | `/api/provider` | `provider.list` | Keep | Request and response accepted as-is. |
+| [x] 017 | `GET` | `/api/provider/{providerID}` | `provider.get` | Keep | Request, response, and not-found error accepted as-is. |
+| [x] 018 | `GET` | `/api/command` | `command.list` | Keep | Request and response accepted as-is. |
+| [x] 019 | `GET` | `/api/skill` | `skill.list` | Keep | Renamed `location` to `path`; removed the skill-specific `slash` flag and slash-command behavior. |
+| [x] 020 | `GET` | `/api/reference` | `reference.list` | Keep | Removed duplicate `description` and `hidden` fields from nested `source`. |
+| [x] 021 | `GET` | `/api/config` | `config.get` | Keep | Compatibility entries removed; response now contains only documents and OpenCode directories. |
+| [x] 022 | `GET` | `/api/config/preferences` | `config.preferences` | Remove | Redundant special projection of global config. |
+| [x] 023 | `PATCH` | `/api/config/preferences` | `config.updatePreferences` | Remove | Redundant field-specific config mutation API. |
 | [ ] 024 | `GET` | `/api/config/shell` | `config.shells` |  |  |
+| [x] 024a | `PATCH` | `/api/experimental/config` | `experimental.config.update` | Change | Experimental global config mutation; initially accepts only `shell`. |
 
 ## Group 3: Credentials, integrations, MCP, and web search
 
@@ -108,8 +109,8 @@ Review endpoints in document order. For each endpoint, select one disposition an
 
 | Done | Method | Path | Operation ID | Decision | Notes |
 |---|---|---|---|---|---|
-| [ ] 025 | `GET` | `/api/integration` | `integration.list` |  |  |
-| [ ] 026 | `GET` | `/api/integration/{integrationID}` | `integration.get` |  |  |
+| [x] 025 | `GET` | `/api/integration` | `integration.list` | Keep | Full integration inventory is consumed by authentication and integration-selection clients. |
+| [x] 026 | `GET` | `/api/integration/{integrationID}` | `integration.get` | Change | Missing integration now returns typed `404` instead of optional data. |
 | [ ] 027 | `POST` | `/api/experimental/integration/wellknown` | `experimental.integration.wellknown.add` |  |  |
 | [ ] 028 | `POST` | `/api/integration/{integrationID}/connect/key` | `integration.connect.key` |  |  |
 | [ ] 029 | `POST` | `/api/integration/{integrationID}/connect/oauth` | `integration.oauth.connect` |  |  |

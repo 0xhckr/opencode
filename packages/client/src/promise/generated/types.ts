@@ -322,9 +322,8 @@ export type SkillInfo = {
   id: string
   name: string
   description?: string
-  slash?: boolean
   autoinvoke?: boolean
-  location: string
+  path: string
   content: string
 }
 
@@ -398,15 +397,9 @@ export type ShellInfo1 = {
   time: { started: number; completed?: number }
 }
 
-export type ReferenceLocalSource = { type: "local"; path: string; description?: string; hidden?: boolean }
+export type ReferenceLocalSource = { type: "local"; path: string }
 
-export type ReferenceGitSource = {
-  type: "git"
-  repository: string
-  branch?: string
-  description?: string
-  hidden?: boolean
-}
+export type ReferenceGitSource = { type: "git"; repository: string; branch?: string }
 
 export type WorktreeDirectory = { directory: string; strategy?: string }
 
@@ -430,8 +423,6 @@ export type WebSearchProvider = { id: string; name: string }
 export type WebSearchResult = { url: string; title?: string; content?: string; time: { published?: number } }
 
 export type ConfigWorktree = { directory: string }
-
-export type ConfigPreferences = { shell?: string; websearch?: false | { provider: "random" | (string & {}) } }
 
 export type ConfigShellOption = { path: string; name: string; acceptable: boolean }
 
@@ -2108,8 +2099,6 @@ export type ConfigEntry =
       }
     }
   | { type: "directory"; path: string }
-  | { type: "agents"; path: string }
-  | { type: "claude"; path: string }
 
 export type SessionInboxUser = {
   id: string
@@ -2522,6 +2511,14 @@ export type ProviderNotFoundError = {
 }
 export const isProviderNotFoundError = (value: unknown): value is ProviderNotFoundError =>
   typeof value === "object" && value !== null && "_tag" in value && value["_tag"] === "ProviderNotFoundError"
+
+export type IntegrationNotFoundError = {
+  readonly _tag: "IntegrationNotFoundError"
+  readonly integrationID: string
+  readonly message: string
+}
+export const isIntegrationNotFoundError = (value: unknown): value is IntegrationNotFoundError =>
+  typeof value === "object" && value !== null && "_tag" in value && value["_tag"] === "IntegrationNotFoundError"
 
 export type McpServerNotFoundError = {
   readonly _tag: "McpServerNotFoundError"
@@ -4530,7 +4527,7 @@ export type IntegrationGetInput = {
   readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
 }
 
-export type IntegrationGetOutput = { location: LocationPublicRef; data: IntegrationInfo | null }
+export type IntegrationGetOutput = { location: LocationPublicRef; data: IntegrationInfo }
 
 export type IntegrationWellknownAddInput = {
   readonly location?: { readonly location?: { readonly directory?: string | undefined } | undefined }["location"]
@@ -6230,19 +6227,8 @@ export type ConfigGetInput = {
 
 export type ConfigGetOutput = Array<ConfigEntry>
 
-export type ConfigPreferencesOutput = ConfigPreferences
-
-export type ConfigUpdatePreferencesInput = {
-  readonly shell?: {
-    readonly shell?: string | null
-    readonly websearch?: false | { readonly provider: "random" | (string & {}) } | null
-  }["shell"]
-  readonly websearch?: {
-    readonly shell?: string | null
-    readonly websearch?: false | { readonly provider: "random" | (string & {}) } | null
-  }["websearch"]
-}
-
-export type ConfigUpdatePreferencesOutput = ConfigPreferences
-
 export type ConfigShellsOutput = Array<ConfigShellOption>
+
+export type ConfigUpdateInput = { readonly shell: { readonly shell: string | null }["shell"] }
+
+export type ConfigUpdateOutput = void

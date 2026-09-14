@@ -77,14 +77,13 @@ const Group = HttpApiGroup.make("mock")
       success: Json,
     }),
   )
-  .add(HttpApiEndpoint.get("configPreferences", "/api/config/preferences", { success: Json }))
+  .add(HttpApiEndpoint.get("configShells", "/api/config/shell", { success: Json }))
   .add(
-    HttpApiEndpoint.patch("configUpdatePreferences", "/api/config/preferences", {
-      payload: JsonPayload,
-      success: Json,
+    HttpApiEndpoint.patch("configUpdate", "/api/experimental/config", {
+      payload: Schema.Struct({ shell: Schema.NullOr(Schema.String) }),
+      success: HttpApiSchema.NoContent,
     }),
   )
-  .add(HttpApiEndpoint.get("configShells", "/api/config/shell", { success: Json }))
   .add(HttpApiEndpoint.get("websearchProviders", "/api/websearch/provider", { success: Json }))
   .add(
     HttpApiEndpoint.get("worktreeList", "/api/worktree", {

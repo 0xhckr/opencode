@@ -5164,14 +5164,7 @@
                       "$ref": "#/components/schemas/Location.PublicRef"
                     },
                     "data": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/components/schemas/Integration.Info"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "$ref": "#/components/schemas/Integration.Info"
                     }
                   },
                   "required": ["location", "data"],
@@ -5196,6 +5189,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "IntegrationNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationNotFoundErrorEncoded"
                 }
               }
             }
@@ -12724,98 +12727,6 @@
         "summary": "Get configuration"
       }
     },
-    "/api/config/preferences": {
-      "get": {
-        "tags": ["config"],
-        "operationId": "config.preferences",
-        "parameters": [],
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "Config.Preferences",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Config.Preferences"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "InvalidRequestError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UnauthorizedError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
-                }
-              }
-            }
-          }
-        },
-        "description": "Return preferences from the highest-precedence global configuration document.",
-        "summary": "Get global preferences"
-      },
-      "patch": {
-        "tags": ["config"],
-        "operationId": "config.updatePreferences",
-        "parameters": [],
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "Config.Preferences",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Config.Preferences"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "InvalidRequestError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UnauthorizedError",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
-                }
-              }
-            }
-          }
-        },
-        "description": "Patch preferences in the highest-precedence global configuration document.",
-        "summary": "Update global preferences",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Config.PreferencesPatch"
-              }
-            }
-          },
-          "required": true
-        }
-      }
-    },
     "/api/config/shell": {
       "get": {
         "tags": ["config"],
@@ -12859,6 +12770,51 @@
         },
         "description": "Return shells available to terminal and agent execution.",
         "summary": "List available shells"
+      }
+    },
+    "/api/experimental/config": {
+      "patch": {
+        "tags": ["config"],
+        "operationId": "experimental.config.update",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "<No Content>"
+          },
+          "400": {
+            "description": "InvalidRequestError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidRequestErrorEncoded"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UnauthorizedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedErrorEncoded"
+                }
+              }
+            }
+          }
+        },
+        "description": "Patch supported fields in the highest-precedence global configuration document.",
+        "summary": "Update global configuration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Config.Patch"
+              }
+            }
+          },
+          "required": true
+        }
       }
     }
   },
@@ -13048,34 +13004,6 @@
         },
         "additionalProperties": false
       },
-      "Config.AgentsDirectoryEncoded": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": ["agents"]
-          },
-          "path": {
-            "type": "string"
-          }
-        },
-        "required": ["type", "path"],
-        "additionalProperties": false
-      },
-      "Config.ClaudeDirectoryEncoded": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": ["claude"]
-          },
-          "path": {
-            "type": "string"
-          }
-        },
-        "required": ["type", "path"],
-        "additionalProperties": false
-      },
       "Config.CommandEncoded": {
         "type": "object",
         "properties": {
@@ -13164,12 +13092,6 @@
           },
           {
             "$ref": "#/components/schemas/Config.DirectoryEncoded"
-          },
-          {
-            "$ref": "#/components/schemas/Config.AgentsDirectoryEncoded"
-          },
-          {
-            "$ref": "#/components/schemas/Config.ClaudeDirectoryEncoded"
           }
         ]
       },
@@ -13707,40 +13629,7 @@
         },
         "additionalProperties": false
       },
-      "Config.Plugin.EntryEncoded": {
-        "type": "object",
-        "properties": {
-          "package": {
-            "type": "string"
-          },
-          "options": {
-            "type": "object"
-          }
-        },
-        "required": ["package"],
-        "additionalProperties": false
-      },
-      "Config.Preferences": {
-        "type": "object",
-        "properties": {
-          "shell": {
-            "type": "string"
-          },
-          "websearch": {
-            "anyOf": [
-              {
-                "type": "boolean",
-                "enum": [false]
-              },
-              {
-                "$ref": "#/components/schemas/ConfigWebSearch.InfoEncoded"
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "Config.PreferencesPatch": {
+      "Config.Patch": {
         "type": "object",
         "properties": {
           "shell": {
@@ -13752,26 +13641,22 @@
                 "type": "null"
               }
             ]
-          },
-          "websearch": {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "type": "boolean",
-                    "enum": [false]
-                  },
-                  {
-                    "$ref": "#/components/schemas/ConfigWebSearch.InfoEncoded"
-                  }
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         },
+        "required": ["shell"],
+        "additionalProperties": false
+      },
+      "Config.Plugin.EntryEncoded": {
+        "type": "object",
+        "properties": {
+          "package": {
+            "type": "string"
+          },
+          "options": {
+            "type": "object"
+          }
+        },
+        "required": ["package"],
         "additionalProperties": false
       },
       "Config.ProviderEncoded": {
@@ -15234,6 +15119,23 @@
           }
         },
         "required": ["id", "type", "label"],
+        "additionalProperties": false
+      },
+      "IntegrationNotFoundErrorEncoded": {
+        "type": "object",
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": ["IntegrationNotFoundError"]
+          },
+          "integrationID": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["_tag", "integrationID", "message"],
         "additionalProperties": false
       },
       "InvalidCursorErrorEncoded": {
@@ -16864,12 +16766,6 @@
           },
           "branch": {
             "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "hidden": {
-            "type": "boolean"
           }
         },
         "required": ["type", "repository"],
@@ -16906,12 +16802,6 @@
           },
           "path": {
             "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "hidden": {
-            "type": "boolean"
           }
         },
         "required": ["type", "path"],
@@ -18850,20 +18740,17 @@
           "description": {
             "type": "string"
           },
-          "slash": {
-            "type": "boolean"
-          },
           "autoinvoke": {
             "type": "boolean"
           },
-          "location": {
+          "path": {
             "type": "string"
           },
           "content": {
             "type": "string"
           }
         },
-        "required": ["id", "name", "location", "content"],
+        "required": ["id", "name", "path", "content"],
         "additionalProperties": false
       },
       "SkillNotFoundErrorEncoded": {
