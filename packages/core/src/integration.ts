@@ -143,6 +143,8 @@ export type Editor = {
 }
 
 export interface Interface extends State.Transformable<Editor> {
+  /** Revision of integration definitions; credential values remain owned by Credential. */
+  readonly revision: () => number
   /** Registers a scoped transform over the integration registry. */
   /** Returns one integration with its methods and current connections. */
   readonly get: (id: ID) => Effect.Effect<Info | undefined>
@@ -648,6 +650,7 @@ const layer = Layer.effect(
     return Service.of({
       transform: state.transform,
       reload: state.reload,
+      revision: state.revision,
       get: Effect.fn("Integration.get")(function* (id) {
         const entry = state.get().integrations.get(id)
         if (!entry) return undefined

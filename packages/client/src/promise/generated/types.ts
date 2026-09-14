@@ -858,11 +858,20 @@ export type IntegrationUpdated = {
   data: {}
 }
 
-export type CatalogUpdated = {
+export type ProviderUpdated = {
   id: string
   created: number
   metadata?: { [x: string]: any }
-  type: "catalog.updated"
+  type: "provider.updated"
+  location?: LocationRef
+  data: {}
+}
+
+export type ModelUpdated = {
+  id: string
+  created: number
+  metadata?: { [x: string]: any }
+  type: "model.updated"
   location?: LocationRef
   data: {}
 }
@@ -2305,7 +2314,8 @@ export type V2Event =
   | CredentialUpdated
   | CredentialSwitched
   | IntegrationUpdated
-  | CatalogUpdated
+  | ProviderUpdated
+  | ModelUpdated
   | AgentUpdated
   | SessionCreated
   | SessionAgentSelected
